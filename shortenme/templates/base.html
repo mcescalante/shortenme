@@ -68,27 +68,7 @@
     {% endif %}
   {% endwith %}
     
-    <h1 class="text-xl">
-      Create a shortened URL
-    </h1>
-    <form method="post">
-      <div>
-        <label for="url" class="block text-sm font-medium text-gray-700">Source URL</label>
-        <div class="mt-1">
-          <input type="url" name="url" id="url" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="https://somewebsitehere.com/">
-        </div>
-      </div>
-      <div>
-        <label for="short" class="block text-sm font-medium text-gray-700">(Optional) Set URL shortcut</label>
-        <div class="mt-1">
-          <input type="text" name="short" id="short" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="neat-link">
-        </div>
-      </div>
-
-      <button type="submit" class="inline-flex items-center px-3 py-3 my-3 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-        Shorten!
-      </button>
-    </form>
+  {% block content %}{% endblock %}
 
   </div>
 </body>

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+  <h1 class="text-xl">
+    Create a shortened URL
+  </h1>
+  <form method="post">
+    <div>
+      <label for="url" class="block text-sm font-medium text-gray-700">Source URL</label>
+      <div class="mt-1">
+        <input type="url" name="url" id="url" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="https://somewebsitehere.com/" required>
+      </div>
+    </div>
+    <div>
+      <label for="short" class="block text-sm font-medium text-gray-700">(Optional) Set URL shortcut</label>
+      <div class="mt-1">
+        <input type="text" name="short" id="short" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="neat-link">
+      </div>
+    </div>
+    <div>
+      <label for="expiry" class="block text-sm font-medium text-gray-700">(Optional) Set a URL expiry.</label>
+
+      <div class="mt-1">
+        <input type="text" name="expiry" id="expiry" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="2022-02-14T23:35:00">
+      </div>
+      <p class="mt-2 text-sm text-gray-500" id="email-description">Use format YYYY-MM-DDTHH:mm:ss. Timezone is optional, ISO8601 is accepted.</p>
+    </div>
+
+    <button type="submit" class="inline-flex items-center px-3 py-3 my-3 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+      Shorten!
+    </button>
+  </form>
+{% endblock %}
