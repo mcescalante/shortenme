@@ -6,6 +6,8 @@ WORKDIR /app
 
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
+ARG DEPLOY_URL=http://localhost:8000/
+ENV DEPLOY_URL $DEPLOY_URL
 
 COPY . .
 

@@ -4,13 +4,17 @@ This is a URL shortener written in Flask with a user interface styled with tailw
 
 # Running
 
-The easiest way to run this application is as a container via the Dockerfile. Build and run:
+The easiest way to run this application is as a container via the Dockerfile. 
+
+Assuming you would like to run this on `localhost:8000` (default), build and run:
 ```
 docker build -t shortenme .
 docker run -p 8000:8000 --name shortenme shortenme
 ```
 
-Visit http://localhost:8000 to see the application's user interface, or just begin using the API.
+Visit http://localhost:8000 to see the application's user interface, or just begin using [the API](#api-endpoints).
+
+If you would like to deploy
 
 Alternatively, you can follow the development setup below and run the applicaton without a container.
 
@@ -20,13 +24,14 @@ Alternatively, you can follow the development setup below and run the applicaton
 
 The simplest way to deploy this application is as a container. Use the included Dockerfile which uses gunicorn and is ready for production. 
 
-1. build the container with `docker build -t shortenme .`
+1. build the container and specify your deploy URL with `docker build -t shortenme --build-arg DEPLOY_URL=http://example.com/ .`
+    - If you would like to run the application on a port other than 8000, edit the port in `gunicorn.sh`
 2. push it to Docker Hub or your chosen container registry
 3. run the container from a docker ready platform or a VM
 
 ## Non-Container
 
-If you wish to deploy this application directly without using a container it is still recommended to use gunicorn which is a production ready WSGI container. You should follow the development setup below on the system you wish to deploy to and use the script `gunicorn.sh` or the command inside of it with an init daemon such as systemd. 
+If you wish to deploy this application directly without using a container it is still recommended to use gunicorn which is a production ready WSGI HTTP server. You should follow the development setup below on the system you wish to deploy to. To start the application, use the script `gunicorn.sh` or utilize the `gunicorn` command in the file with an init daemon such as systemd. 
 
 Although it is not necessary, it is still recommended that you use a web server such as nginx, apache, or caddy as they offer numerous benefits.
 
@@ -43,7 +48,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Create the necessary database schema with SQLite in the app folder `shortenme`
+Create the necessary database schema in the app folder `shortenme`
 
 ```bash
 FLASK_APP=shortenme/app.py python -m flask init-db
@@ -52,9 +57,9 @@ FLASK_APP=shortenme/app.py python -m flask init-db
 sqlite3 shortenme/app.db < shortenme/schema.sql
 ```
 
-This project uses tailwindcss for styling the frontend. Additional CSS styles should be added to `main.css`. Tailwind is a utility first framework, and classes are used in html for styling. Don't edit `style.css` directly as it is built. 
+This project uses tailwindcss for styling the frontend. Additional CSS styles should be added to `main.css`. Tailwind is a utility first framework, and classes are used in html for styling. **Do not** edit `style.css` directly as it is a built file. 
 
-If you wish to edit styles you must install tailwindcss with `npm`. You can then watch the html & css files for changes which writes only the necessary styles to a static CSS file to keep it as small as possible.
+If you wish to edit styles you must install tailwindcss with `npm`. You can then watch the html & css files for changes which writes only the necessary styles to a minified static CSS file (`style.css`) to keep it as small as possible.
 
 ```bash
 npm install
@@ -67,7 +72,7 @@ Now, you can run the project's development server
 python shortenme/app.py
 ```
 
-Visit http://localhost:5000 to see the user interface or begin using the API.
+Visit http://localhost:5000 to see the user interface or begin using [the API](#api-endpoints).
 
 ## Running Tests
 

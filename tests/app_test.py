@@ -1,5 +1,7 @@
 import pytest
+import base64
 from shortenme.app import app, init_db
+
 
 @pytest.fixture
 def client():
@@ -13,6 +15,7 @@ def client():
 
     # Teardown
 
+
 def test_index(client):
     """Test that the index returns HTML with status 200"""
     response = client.get("/", content_type="html/text")
@@ -20,16 +23,25 @@ def test_index(client):
 
 
 def test_analytics_page(client):
-    """Test that the analytics page returns HTML with status 200"""
+    """Test that the admin analytics page returns 200 when passed valid HTTP Basic credentials"""
+    credentials = base64.b64encode(b"admin:adminpass").decode("utf-8")
+    response = client.get(
+        "/analytics/",
+        content_type="html/text",
+        headers={"Authorization": "Basic " + credentials},
+    )
+    assert response.status_code == 200
+
+
+def test_analytics_page_unauthorized(client):
+    """Test that the admin analytics page returns unauthorized without credentials"""
     response = client.get("/analytics/", content_type="html/text")
-    assert response.status_code == 200 
+    assert response.status_code == 401
 
 
 def test_api_create_shorturl_random(client):
     """Ensure that random short URLs can be created by only providing a URL"""
-    response = client.post('/api/create', json={
-        "url": "google.com"
-    })
+    response = client.post("/api/create", json={"url": "google.com"})
     assert response.status_code == 200
     assert response.json["result"] == "success"
     assert "short_url" and "url" in response.json
@@ -37,11 +49,14 @@ def test_api_create_shorturl_random(client):
 
 def test_api_create_shorturl(client):
     """Ensure that short URLs can be created with custom short url and expiry"""
-    response = client.post('/api/create', json={
-        "url": "google.com",
-        "shorturl": "short7",
-        "expiry": "2022-02-14T23:35:00"
-    })
+    response = client.post(
+        "/api/create",
+        json={
+            "url": "google.com",
+            "shorturl": "short7",
+            "expiry": "2022-02-14T23:35:00",
+        },
+    )
     assert response.status_code == 200
     assert response.json["result"] == "success"
     assert response.json["short_url"] == "short7"
@@ -50,57 +65,65 @@ def test_api_create_shorturl(client):
 
 def test_api_reject_create_duplicate(client):
     """Ensure that duplicates cannot be inserted"""
-    client.post('/api/create', json={
-        "url": "google.com",
-        "shorturl": "short7",
-        "expiry": "2022-02-14T23:35:00"
-    })
-    response = client.post('/api/create', json={
-        "url": "google.com",
-        "shorturl": "short7",
-        "expiry": "2022-02-14T23:35:00"
-    })
+    client.post(
+        "/api/create",
+        json={
+            "url": "google.com",
+            "shorturl": "short7",
+            "expiry": "2022-02-14T23:35:00",
+        },
+    )
+    response = client.post(
+        "/api/create",
+        json={
+            "url": "google.com",
+            "shorturl": "short7",
+            "expiry": "2022-02-14T23:35:00",
+        },
+    )
     assert response.status_code == 409
 
 
 def test_api_create_bad_payload_failure(client):
     """Ensure that payloads missing url or other data errors fail"""
-    response = client.post('/api/create', json={})
+    response = client.post("/api/create", json={})
     assert response.status_code == 400
     assert "error" in response.json
 
 
 def test_api_delete_shorturl(client):
     """Ensure that URLs can be deleted"""
-    client.post('/api/create', json={
-        "url": "google.com",
-        "shorturl": "short7",
-        "expiry": "2022-02-14T23:35:00"
-    })
-    response = client.delete('/api/delete', json={
-        "shorturl": "short7"
-    })
+    client.post(
+        "/api/create",
+        json={
+            "url": "google.com",
+            "shorturl": "short7",
+            "expiry": "2022-02-14T23:35:00",
+        },
+    )
+    response = client.delete("/api/delete", json={"shorturl": "short7"})
     assert response.status_code == 200
     assert response.json["deleted"] == "success"
 
 
 def test_api_delete_failure(client):
     """Ensure error response on a deletion of URL that does not exist"""
-    response = client.delete('/api/delete', json={
-        "shorturl": "short7"
-    })
+    response = client.delete("/api/delete", json={"shorturl": "short7"})
     assert response.status_code == 404
     assert "error" in response.json
 
 
 def test_api_analytics(client):
     """Ensure that analytics for a given short URL can be retrieved"""
-    client.post('/api/create', json={
-        "url": "google.com",
-        "shorturl": "short7",
-        "expiry": "2022-02-14T23:35:00"
-    })
-    response = client.get('/api/analytics/short7')
+    client.post(
+        "/api/create",
+        json={
+            "url": "google.com",
+            "shorturl": "short7",
+            "expiry": "2022-02-14T23:35:00",
+        },
+    )
+    response = client.get("/api/analytics/short7")
     assert response.status_code == 200
     assert response.json["source_url"] == "http://google.com"
     assert response.json["views"] == 0

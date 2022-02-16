@@ -9,12 +9,12 @@ from flask import (
     url_for,
     g,
 )
-from auth import requires_authorization
 import os
 import pathlib
 import base64
 import sqlite3
 import arrow
+import functools
 from urllib.parse import urlparse, ParseResult
 
 basedir = pathlib.Path(__file__).parent.resolve()
@@ -24,6 +24,38 @@ app.config["ADMIN_USERNAME"] = "admin"
 app.config["ADMIN_PASSWORD"] = "adminpass"
 DEPLOY_URL = os.getenv("DEPLOY_URL", "http://localhost:5000/")
 DATABASE_URI = os.getenv("DATABASE_URI", pathlib.Path(basedir).joinpath("app.db"))
+
+
+def check_auth(username, password):
+    """Check that the username and password match the app config"""
+    return (
+        username == app.config["ADMIN_USERNAME"]
+        and password == app.config["ADMIN_PASSWORD"]
+    )
+
+
+def requires_authorization(f):
+    """Wrapper to check authorization"""
+
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def authenticate():
+    """User authentication prompt"""
+    message = {"message": "Authenticate for administrative analytics"}
+    resp = jsonify(message)
+
+    resp.status_code = 401
+    resp.headers["WWW-Authenticate"] = "Basic"
+
+    return resp
 
 
 def get_db():
