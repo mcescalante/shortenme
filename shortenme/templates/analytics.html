@@ -1,14 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
   <h1 class="text-2xl">
-    Analytics overview
+    Analytics for {{short_url}}
   </h1>
   <ul role="list" class="divide-y divide-gray-200">
     <li class="py-4">
-      Total shortened URLs: {{url_count}}
+      Views: {{data[5]}}
     </li>
     <li class="py-4">
-      Total views: {{total_views}}
+      Created (UTC): {{data[1]}}
+    </li>
+    <li class="py-4">
+      Expiry: {{data[2]}}
+    </li>
+    <li class="py-4">
+      Source URL: {{data[3]}}
     </li>
   </ul>
 

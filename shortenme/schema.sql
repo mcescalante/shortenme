@@ -1,3 +1,5 @@
+DROP TABLE IF exists urls;
+
 CREATE TABLE urls (
   id integer PRIMARY KEY NOT NULL,
   timestamp datetime default current_timestamp,

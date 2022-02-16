@@ -10,8 +10,7 @@ basedir = pathlib.Path(__file__).parent.resolve()
 app = Flask(__name__)
 app.config['SECRET_KEY']="verysecret"
 DEPLOY_URL = os.getenv('DEPLOY_URL', 'http://localhost:5000/')
-DATABASE_URI = os.getenv('DATABASE', pathlib.Path(basedir).joinpath('app.db'))
-
+DATABASE_URI = os.getenv('DATABASE_URI', pathlib.Path(basedir).joinpath('app.db'))
 
 def get_db():
   db = getattr(g, '_database', None)
@@ -27,6 +26,7 @@ def close_connection(exception):
     db.close()
 
 
+@app.cli.command('init-db')
 def init_db():
   with app.app_context():
     db = get_db()
@@ -89,6 +89,7 @@ def create_shorturl():
   # Create a random 6 character URL if none is supplied
   # Decode to ascii from bytes so we can use equality rather than like in SQLite
   short_url = base64.urlsafe_b64encode(os.urandom(6)).decode("ascii")
+  user_expiry = None
   if 'shorturl' in request.json:
     short_url = request.json['shorturl']
   if 'expiry' in request.json:
@@ -108,7 +109,7 @@ def create_shorturl():
   except UrlExistsError as error_message:
     return make_response(jsonify({"error": str(error_message)}), 409)
 
-  return jsonify({"result": "success", "url": DEPLOY_URL + short_url})
+  return jsonify({"result": "success", "url": DEPLOY_URL + short_url, "short_url": short_url})
 
 
 @app.route('/api/delete', methods=["DELETE"])
@@ -127,6 +128,19 @@ def delete_shorturl():
   cur.execute('DELETE FROM urls where shorturl=:shorturl', {"shorturl": url})
   conn.commit()
   return jsonify({"deleted": "success"})
+
+
+@app.route('/api/analytics/<short_url>')
+def analytics_api(short_url):
+  cur = get_db().cursor()
+  cur.execute("SELECT * from urls where shorturl=:queryurl", {"queryurl": short_url})
+  data = cur.fetchone()
+  return jsonify({
+      "created_utc": data[1],
+      "expiry": data[2],
+      "source_url": data[3],
+      "views": data[5]
+  })
   
 
 @app.route("/<shorturl>")
@@ -153,16 +167,18 @@ def analytics_overview():
   cur = get_db().cursor()
   cur.execute("SELECT count(*) from urls")
   url_count = cur.fetchone()[0]
-  return render_template('analytics-overview.html', url_count=url_count)
+  cur.execute("SELECT sum(views) from urls")
+  total_views = cur.fetchone()[0]
+  return render_template('analytics-overview.html', url_count=url_count, total_views=total_views)
 
 
 # TODO: write template for analytics
 @app.route('/analytics/<short_url>')
 def analytics(short_url):
   cur = get_db().cursor()
-  cur.execute("SELECT views from urls where shorturl=:queryurl", {"queryurl": short_url})
-  views = cur.fetchone()[0]
-  return "Views: " + str(views)
+  cur.execute("SELECT * from urls where shorturl=:queryurl", {"queryurl": short_url})
+  data = cur.fetchone()
+  return render_template('analytics.html', short_url=short_url, data=data)
 
 
 if __name__ == '__main__':
