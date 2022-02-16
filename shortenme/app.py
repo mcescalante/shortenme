@@ -9,6 +9,7 @@ from flask import (
     url_for,
     g,
 )
+from auth import requires_authorization
 import os
 import pathlib
 import base64
@@ -19,6 +20,8 @@ from urllib.parse import urlparse, ParseResult
 basedir = pathlib.Path(__file__).parent.resolve()
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "verysecret"
+app.config["ADMIN_USERNAME"] = "admin"
+app.config["ADMIN_PASSWORD"] = "adminpass"
 DEPLOY_URL = os.getenv("DEPLOY_URL", "http://localhost:5000/")
 DATABASE_URI = os.getenv("DATABASE_URI", pathlib.Path(basedir).joinpath("app.db"))
 
@@ -53,12 +56,13 @@ def init_db():
 
 class UrlExistsError(Exception):
     """Custom exception for short URLs that already exist"""
+
     pass
 
 
 def create_short_url(url, user_short_url=None, user_expiry=None):
     """Create a short URL for a given URL with optional expiry and user supplied short URL
-    
+
     Generates a random 6 character URL if none is supplied using os.random,
     decode to ascii from bytes so we can use equality rather than like in SQLite
     """
@@ -219,15 +223,23 @@ def redirect_to_source(shorturl):
 
 
 @app.route("/analytics/")
+@requires_authorization
 def analytics_overview():
-    """Analytics web interface overview for entire system"""
+    """Analytics web interface overview for entire system intended for administrators
+    Requires basic auth which is set in the app config at the top of this application file
+    """
     cur = get_db().cursor()
     cur.execute("SELECT count(*) from urls")
     url_count = cur.fetchone()[0]
     cur.execute("SELECT sum(views) from urls")
     total_views = cur.fetchone()[0]
+    cur.execute("SELECT * from urls")
+    all_urls = cur.fetchall()
     return render_template(
-        "analytics-overview.html", url_count=url_count, total_views=total_views
+        "analytics-overview.html",
+        url_count=url_count,
+        total_views=total_views,
+        all_urls=all_urls,
     )
 
 

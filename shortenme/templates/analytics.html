@@ -1,23 +1,9 @@
-{% extends "base.html" %}
-{% block content %}
-  <h1 class="text-2xl">
-    Analytics for {{short_url}}
-  </h1>
-  <ul role="list" class="divide-y divide-gray-200">
-    <li class="py-4">
-      Views: {{data[5]}}
-    </li>
-    <li class="py-4">
-      Created (UTC): {{data[1]}}
-    </li>
-    <li class="py-4">
-      Expiry: {{data[2]}}
-    </li>
-    <li class="py-4">
-      Source URL: {{data[3]}}
-    </li>
-  </ul>
-
-
-  
+{% extends "base.html" %} {% block content %}
+<h1 class="text-2xl">Analytics for {{short_url}}</h1>
+<ul role="list" class="divide-y divide-gray-200">
+  <li class="py-4">Views: {{data[5]}}</li>
+  <li class="py-4">Created (UTC): {{data[1]}}</li>
+  <li class="py-4">Expiry: {{data[2]}}</li>
+  <li class="py-4">Source URL: {{data[3]}}</li>
+</ul>
 {% endblock %}
