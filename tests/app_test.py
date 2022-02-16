@@ -14,11 +14,13 @@ def client():
     # Teardown
 
 def test_index(client):
+    """Test that the index returns HTML with status 200"""
     response = client.get("/", content_type="html/text")
     assert response.status_code == 200
 
 
 def test_analytics_page(client):
+    """Test that the analytics page returns HTML with status 200"""
     response = client.get("/analytics/", content_type="html/text")
     assert response.status_code == 200 
 
@@ -92,6 +94,7 @@ def test_api_delete_failure(client):
 
 
 def test_api_analytics(client):
+    """Ensure that analytics for a given short URL can be retrieved"""
     client.post('/api/create', json={
         "url": "google.com",
         "shorturl": "short7",

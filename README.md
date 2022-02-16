@@ -1,6 +1,6 @@
 # URL Shortener
 
-This is a URL shortener written in Flask with a user interface styled with tailwindcss.
+This is a URL shortener written in Flask with a user interface styled with tailwindcss and SQLite for storing data.
 
 # Running
 
