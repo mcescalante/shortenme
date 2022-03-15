@@ -15,6 +15,7 @@ import base64
 import sqlite3
 import arrow
 import functools
+import json
 from urllib.parse import urlparse, ParseResult
 
 basedir = pathlib.Path(__file__).parent.resolve()
@@ -28,11 +29,29 @@ DATABASE_URI = os.getenv("DATABASE_URI", pathlib.Path(basedir).joinpath("app.db"
 
 def check_auth(username, password):
     """Check that the username and password match the app config"""
-    return (
-        username == app.config["ADMIN_USERNAME"]
-        and password == app.config["ADMIN_PASSWORD"]
-    )
+    cur = get_db().cursor()
+    cur.execute("SELECT username, password from user where username=:username AND password=:password", {"username": username, "password": password})
+    result = cur.fetchone()
+    if result:
+        return True
+    else:
+        return False
+    # return (
+    #     username == app.config["ADMIN_USERNAME"]
+    #     and password == app.config["ADMIN_PASSWORD"]
+    # )
 
+def check_key(key):
+    # print(key)
+    cur = get_db().cursor()
+    if key:
+        cur.execute("SELECT key from api_keys where key=:key", {"key": key})
+        key_result = cur.fetchone()
+        # print(key_result)
+        if key_result:
+            return True
+        else:
+            return False
 
 def requires_authorization(f):
     """Wrapper to check authorization"""
@@ -40,7 +59,9 @@ def requires_authorization(f):
     @functools.wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
+        key = request.headers.get('X-App-Key')
+        # print(key)
+        if not check_key(key):
             return authenticate()
         return f(*args, **kwargs)
 
@@ -49,7 +70,7 @@ def requires_authorization(f):
 
 def authenticate():
     """User authentication prompt"""
-    message = {"message": "Authenticate for administrative analytics"}
+    message = {"message": "Please authenticate and check your username/password"}
     resp = jsonify(message)
 
     resp.status_code = 401
@@ -147,6 +168,7 @@ def index():
 
 
 @app.route("/api/create", methods=["POST"])
+@requires_authorization
 def create_shorturl():
     """API for creating a short URL"""
     # Check for required payload (the source url)
@@ -228,6 +250,23 @@ def analytics_api(short_url):
         }
     )
 
+@app.route("/api/user/create", methods=['POST'])
+def create_user():
+    """API endpoint to create a new user"""
+    data = request.json
+    # print(data)
+    # print(type(data))
+    if not 'username' in data or not 'password' in data:
+        return make_response(jsonify({"error": "please provide a username and password"}), 400)
+    
+    conn = get_db()
+    cur = get_db().cursor()
+    try:
+        cur.execute("INSERT into user (username, password) values (:username, :password)", {"username": data['username'], "password": data['password']})
+        conn.commit()
+    except sqlite3.IntegrityError:
+        return make_response(jsonify({"error": "user with that username already exists"}), 409)
+    return make_response(jsonify({"status": "successfully created user " + data['username']}), 200)
 
 @app.route("/<shorturl>")
 def redirect_to_source(shorturl):
